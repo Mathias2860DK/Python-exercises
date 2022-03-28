@@ -1,0 +1,4 @@
+.ipynb_checkpoints
+modules
+output.txt
+output_files.txt
