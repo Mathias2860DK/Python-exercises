@@ -67,10 +67,11 @@ def get_apartments_one_page(location, offset):
 def scrape_more_pages(page_number, location):
     full_list = []
     for number in (n+1 for n in range(page_number)):
+        print(number)
         if(number == 1):
             offset = 0
         else:
-            offset = (page_number-1) * 18
+            offset = (number-1) * 18
 
         one_page_data = get_apartments_one_page(location, offset)
         full_list.extend(one_page_data)
@@ -101,7 +102,7 @@ def scrape_more_pages(page_number, location):
 
 
 location = 'københavn'
-number_of_pages = 3
+number_of_pages = 4
 final_df = scrape_more_pages(number_of_pages, location)
 print(len(final_df))
 print(final_df)
