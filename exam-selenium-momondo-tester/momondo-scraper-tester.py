@@ -10,12 +10,14 @@ import os
 
 #Change this to your own chromedriver path!
 driver = webdriver.Chrome()  # looks in /usr/local/bin
-def srape_flights():
+def srape_flights(from_location, to_location, from_date, to_date, flexible=False):
 
- 
+  URL = 'https://www.kayak.dk/flights/{from_location}-{to_location}/{from_date}/{to_date}/2adults?sort=bestflight_a'.format(
+        from_location=from_location, to_location=to_location, from_date=from_date, to_date=to_date)
+
   momondo = 'https://www.momondo.dk/flight-search/CPH-63cy/2022-07-14-flexible/2022-07-25-flexible/2adults?sort=bestflight_a'
-  kayak = 'https://www.kayak.dk/flights/CPH-LCA/2022-07-14/2022-07-25/2adults?sort=bestflight_a'
-  driver.get(kayak)
+  #kayak = 'https://www.kayak.dk/flights/CPH-LCA/2022-07-14/2022-07-25/2adults?sort=bestflight_a'
+  driver.get(URL)
   sleep(10)
 
   # close pop up
@@ -49,6 +51,8 @@ def srape_flights():
   prices = []
   company_names_list = []
 
+  flight_urls = []
+
   #Loads 16 results more
   try:
         more_results = '//a[@class = "moreButton"]'
@@ -59,6 +63,7 @@ def srape_flights():
         pass
   
   flight_rows = driver.find_elements_by_xpath('//div[@class="resultWrapper"]')
+  print(flight_rows)
   # convert flights_rows to html so beatufiul soup can understand it
   for WebElement in flight_rows:
     
@@ -78,6 +83,15 @@ def srape_flights():
     company_names = inner_grid.find("span", {"class": "codeshares-airline-names"}).text
     #print(company_names)
     company_names_list.append(company_names)
+
+    #Link til flight
+    link_to_flights = inner_grid.find("div", {"class": "col col-best"})
+    link_to_flights = link_to_flights.find('a')['href']
+   
+    base_url = "https://kayak.dk"
+    scrapped_url = base_url + link_to_flights
+    flight_url = scrapped_url.replace("amp;", "")
+    flight_urls.append(flight_url)
 
 
     # flight departure, stops, time ...
@@ -129,7 +143,7 @@ def srape_flights():
             #time date hardcoded for now 
             return_dates.append('25 juli')
   cols = (['Out Date', 'Return Date', 'Out Duration',
-            'Return Duration', 'Out Stops', 'Return Stops', 'Out Time', 'Return Time', 'Company names', 'Price'])
+            'Return Duration', 'Out Stops', 'Return Stops', 'Out Time', 'Return Time', 'Company names', 'Price','Url'])
 
   flights_df = pd.DataFrame({
     'Out Date': out_dates,
@@ -141,15 +155,17 @@ def srape_flights():
     'Out Time' : out_time_list,
     'Return Time': return_time_list, 
     'Company names': company_names_list,
-    'Price': prices})[cols]
+    'Price': prices,
+    'Url': flight_urls})[cols]
 
     # so we can know when it was scraped
   flights_df['timestamp'] = strftime("%Y%m%d-%H%M")
   return flights_df
 
-
-final_df = srape_flights()
-csv_path = os.getcwd() + "/exam-selenium-momondo-tester/flight-scrape.csv"
+#63cy = hele cypern
+#118cy = hele italien 
+final_df = srape_flights('CPH', 'LCA', '2022-07-14', '2022-07-25')
+csv_path = os.getcwd() + "/exam-selenium-momondo-tester/flight-scrape-4-maj.csv"
 final_df.to_csv(csv_path)
 # class = resultwrapper
 # class = inner-grid keel-grid
